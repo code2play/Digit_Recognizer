@@ -39,16 +39,16 @@ y_train = onehot.transform(y_train.reshape(-1, 1)).toarray()
 y_cv = onehot.transform(y_cv.reshape(-1, 1)).toarray()
 
 cnn_clf = Sequential([
-    Conv2D(16, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+    Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
     BatchNormalization(),
-    Conv2D(16, (3, 3), activation='relu'),
+    Conv2D(32, (3, 3), activation='relu'),
     BatchNormalization(),
     MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
     Dropout(0.25),
 
-    Conv2D(32, (3, 3), activation='relu'),
+    Conv2D(64, (3, 3), activation='relu'),
     BatchNormalization(),
-    Conv2D(32, (3, 3), activation='relu'),
+    Conv2D(64, (3, 3), activation='relu'),
     BatchNormalization(),
     MaxPooling2D(pool_size=(2, 2), strides=(2, 2)),
     Dropout(0.25),
@@ -71,13 +71,18 @@ generator = ImageDataGenerator(zoom_range = 0.1,
                                 rotation_range = 10)
 
 # lr = LearningRateScheduler(lambda x: 1e-3 * 0.95 ** x)
-lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3)
+lr = ReduceLROnPlateau(monitor='val_acc', 
+                        patience=3, 
+                        verbose=1, 
+                        factor=0.5, 
+                        min_lr=0.00001)
 
-cnn_clf.fit(X_train, y_train, epochs=5, batch_size=128, callbacks=[lr], 
-            validation_data=(X_cv, y_cv))
-cnn_clf.fit_generator(generator.flow(X_train, y_train, batch_size=16),
-                        steps_per_epoch=1000,
-                        epochs=15,
+# cnn_clf.fit(X_train, y_train, epochs=5, batch_size=128, callbacks=[lr], 
+            # validation_data=(X_cv, y_cv))
+cnn_clf.fit_generator(generator.flow(X_train, y_train, batch_size=128),
+                        verbose = 2, 
+                        steps_per_epoch = X_train.shape[0] // 128,
+                        epochs=40,
                         validation_data=(X_cv, y_cv),
                         callbacks=[lr])
 
